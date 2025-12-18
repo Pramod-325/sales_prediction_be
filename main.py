@@ -6,6 +6,8 @@ from typing import List, Optional
 from datetime import datetime
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 from prophet import Prophet
 from fastapi.middleware.cors import CORSMiddleware
 from blob_storage import get_storage_backend
