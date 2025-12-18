@@ -74,8 +74,11 @@ jobs:
         with:
           app-name: 'backend-sp'
           slot-name: 'Production'
+          # Force the deployment to use the current directory (extracted)
+          package: . 
           startup-command: 'python3 -m gunicorn --bind=0.0.0.0 --timeout 600 main:app'
 
           
+
 
 
