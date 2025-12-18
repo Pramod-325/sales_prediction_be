@@ -1,0 +1,44 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+// Table 1: Historical Sales
+model SalesHistory {
+  product_code String
+  ds           DateTime
+  y            Float
+
+  @@id([product_code, ds])
+  @@map("sales_history")   // Map to actual table name
+}
+
+// Table 2: Forecasts
+model SalesForecast {
+  product_code    String
+  forecast_date   DateTime
+  predicted_sales Float
+
+  @@id([product_code, forecast_date])
+  @@map("sales_forecasts")
+}
+
+// Table 3: Model Metrics
+model ModelMetric {
+  id                Int      @id @default(autoincrement())
+  training_run_date DateTime @default(now())
+  model_version     String   @default("Hybrid-Prophet-LGBM")
+  wmape             Float?
+  accuracy          Float?
+  rmse              Float?
+  mae               Float?
+  description       String?
+
+  @@map("model_metrics")
+}
