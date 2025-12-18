@@ -103,7 +103,7 @@ class AzureBlobStorage(StorageBackend):
             from azure.storage.blob import BlobServiceClient
             conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
             self.blob_service = BlobServiceClient.from_connection_string(conn_str)
-            self.container = self.blob_service.get_container_client("ml_bin")
+            self.container = self.blob_service.get_container_client("models")
             print("☁️ Storage initialized: Azure Blob")
         except Exception as e:
             raise ImportError(f"Azure init failed: {e}")
