@@ -6,7 +6,7 @@ import tempfile
 from abc import ABC, abstractmethod
 from prophet.serialize import model_from_json, model_to_json
 from prophet import Prophet
-
+from azure.storage.blob import BlobServiceClient
 # --- Abstract Interface ---
 class StorageBackend(ABC):
     @abstractmethod
@@ -100,7 +100,6 @@ class LocalStorage(StorageBackend):
 class AzureBlobStorage(StorageBackend):
     def __init__(self):
         try:
-            from azure.storage.blob import BlobServiceClient
             conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
             self.blob_service = BlobServiceClient.from_connection_string(conn_str)
             self.container = self.blob_service.get_container_client("models")
