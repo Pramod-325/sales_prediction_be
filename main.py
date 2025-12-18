@@ -7,7 +7,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg') 
 from prophet import Prophet
 from fastapi.middleware.cors import CORSMiddleware
 from blob_storage import get_storage_backend
@@ -82,7 +82,7 @@ app = FastAPI(title="Sales Forecasting API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins="*",
+    allow_origins=["*"], # In production, restrict this to your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -134,12 +134,17 @@ async def generate_live_forecast(product_id: str, background_tasks: BackgroundTa
     """
     db = app.state.db
     storage = app.state.storage
+    
+    # Check if models loaded successfully during startup
+    if not app.state.models:
+        raise HTTPException(status_code=503, detail="ML Models failed to load. Check server logs.")
+
     lgbm_model = app.state.models.get('lgb')
     encoder_map = app.state.models.get('encoder_map')
     manifest = app.state.manifest
 
     if not lgbm_model or not encoder_map:
-        raise HTTPException(status_code=503, detail="ML Models are not loaded. Check server logs.")
+        raise HTTPException(status_code=503, detail="ML Models are incomplete. Check server logs.")
 
     # 1. Fetch Latest History
     history_records = await db.saleshistory.find_many(
@@ -150,7 +155,15 @@ async def generate_live_forecast(product_id: str, background_tasks: BackgroundTa
     if not history_records:
         raise HTTPException(status_code=404, detail="No sales history found.")
 
-    df_history = pd.DataFrame([vars(r) for r in history_records])
+    # --- FIX: Convert Prisma Objects to Dicts for Pandas ---
+    data = []
+    for r in history_records:
+        data.append({
+            'ds': r.ds,
+            'y': r.y,
+            'product_code': r.product_code
+        })
+    df_history = pd.DataFrame(data)
     
     # Timezone clean up
     if pd.api.types.is_datetime64_any_dtype(df_history['ds']):
@@ -158,7 +171,6 @@ async def generate_live_forecast(product_id: str, background_tasks: BackgroundTa
     else:
          df_history['ds'] = pd.to_datetime(df_history['ds']).dt.tz_localize(None)
 
-    df_history = df_history.rename(columns={'ds': 'ds', 'y': 'y'})
     df_history['y_log'] = np.log1p(df_history['y'])
 
     # 2. Load or Create Prophet (JSON Mode)
@@ -205,6 +217,8 @@ async def generate_live_forecast(product_id: str, background_tasks: BackgroundTa
     # Ensure all columns exist
     for col in feature_order:
         if col not in df_features.columns:
+            # Add missing columns with default 0 if necessary, or raise error
+            # df_features[col] = 0 
             raise ValueError(f"Missing feature required by model: {col}")
 
     lgb_preds_log = lgbm_model.predict(df_features[feature_order])
