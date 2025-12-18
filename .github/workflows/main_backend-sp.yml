@@ -58,6 +58,7 @@ jobs:
           slot-name: 'Production'
           # Deploying from workspace ensures a flat file structure in wwwroot
           package: ${{ github.workspace }}
-          startup-command: 'python -m prisma generate --schema=./schema.prisma && python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:8000'
+          startup-command: 'python -m prisma generate --schema=./schema.prisma && python -m gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:8000 --timeout 600'
+
 
 
