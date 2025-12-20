@@ -241,16 +241,16 @@ async def generate_live_forecast(product_id: str, background_tasks: BackgroundTa
             'date': row['ds'].strftime('%Y-%m-%d'),
             'sales': round(float(row['predicted_sales']), 2)
         })
-        db_batch.append({
-            'product_code': product_id,
-            'forecast_date': row['ds'],
-            'predicted_sales': float(row['predicted_sales'])
-        })
+        # db_batch.append({
+        #     'product_code': product_id,
+        #     'forecast_date': row['ds'],
+        #     'predicted_sales': float(row['predicted_sales'])
+        # })
 
     # DB Transaction
-    await db.salesforecast.delete_many(where={'product_code': product_id})
-    if db_batch:
-        await db.salesforecast.create_many(data=db_batch)
+    # await db.salesforecast.delete_many(where={'product_code': product_id})
+    # if db_batch:
+    #     await db.salesforecast.create_many(data=db_batch)
 
     return {
         "status": "success", 
